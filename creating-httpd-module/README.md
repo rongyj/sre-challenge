@@ -14,25 +14,9 @@ Send the GitHub URL to the team for review
 # Solution:
 I'm going to use puppet to do this configuration automation with Docker in my local laptop. This solution created a new httpd module to handle the apache httpd installation and configuration for virtual host. It relied on a module firewall from puppetlabs https://forge.puppet.com/puppetlabs/firewall for the firewall configuration. I tested it in centos 7.
 ## Assumptions:
-### Have Docker installed in local host. If not, please go to docker.com https://www.docker.com and download the docker engine and install it.
+Have Docker installed in local host. If not, please go to docker.com https://www.docker.com and download the docker engine and install it.
 
 ## Steps:
-### Create puppetmaster as below:
-```
-docker pull rongyj/puppet-agent4-c7-systemd
-cd ~/git/sre-challenge/
-mkdir puppet-data
-
-docker run  -d --name puppetmaster --cap-add SYS_ADMIN --security-opt seccomp:unconfined --hostname puppetmaster -p 8443:443 -p 8080:80 -v ~/git/sre-challenge/puppet-data/puppet/etc/agent/hosts:/etc/hosts -v ~/git/sre-challenge/puppet-data/puppet/etc/agent/puppet:/etc/puppet   -v ~/git/sre-challenge-new/creating-httpd-module:/opt/puppet -v ~/git/sre-challenge/puppet-data/varpuppet:/opt/varpuppet --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppet-agent4-c7-systemd bash -c "/usr/sbin/init"
-
-docker run -d --name puppetmaster --cap-add SYS_ADMIN --security-opt seccomp:unconfined -h puppet -p 8140:8140 -v ~/git/sre-challenge/puppet-data/puppet:/opt/puppet -v ~/git/sre-challenge/puppet-data/varpuppet:/opt/varpuppet  --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppetserver4-c7-systemd /bin/bash -c "/usr/sbin/init"
-
-docker exec -it puppetmaster /bin/bash
-docker exec puppetmaster cp -Rf /etc/puppet /opt/
-
-rpm -Uvh https://yum.puppetlabs.com/puppetlabs-release-pc1-el-6.noarch.rpm
-yum -y install puppetserver
-```
 ### Test it with puppetagent docker container
 #### Git clone SRE-Challenge repo from GitHub
 ```
@@ -54,7 +38,7 @@ It will map the local port 8443 to the docker container port 443 and local port 
 
 ```
 #### Test it from local host browser
-type "http://localhost:8080/" in a browser and it will be redirected to "https://localhost:8443/" automatically and the "SRE-Challenge" will be displayed.
+type "http://localhost:8080/" in a browser and it will be redirected to "https://localhost:8443/" automatically and the "SRE-Challenge" will be displayed. If the localhost cannot be resolved, you need edit your local /etc/hosts to add "127.0.0.1 localhost localhost " to it and try again.
 From the above container terminal and the iptables -L can show the list of the firewall rules:
 ```
 [root@puppetagent manifests]# iptables -L
