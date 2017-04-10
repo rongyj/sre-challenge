@@ -12,7 +12,7 @@ Place the project on GitHub using a generic name like “sre-challenge” (pleas
 Send the GitHub URL to the team for review
 
 # Solution:
-I'm going to use puppet to do this configuration automation with Docker in my local laptop. This solution created a new httpd module to handle the apache httpd installation and configuration for virtual host. It relied on a module firewall from puppetlabs https://forge.puppet.com/puppetlabs/firewall for the firewall configuration. I tested it in centos 7.
+I'm going to use puppet to do this configuration automation with Docker in my local laptop. This solution created a new httpd module to handle the apache httpd installation and configuration for virtual host. It relies on a module firewall from puppetlabs https://forge.puppet.com/puppetlabs/firewall for the firewall configuration. I tested it in centos 7.
 ## Assumptions:
 Have Docker installed in local host. If not, please go to docker.com https://www.docker.com and download the docker engine and install it.
 
@@ -31,6 +31,18 @@ docker pull rongyj/puppet-agent4-c7-systemd
 docker run  -d --name puppetagent --cap-add SYS_ADMIN --security-opt seccomp:unconfined --hostname puppetagent -p 8443:443 -p 8080:80 -v ~/sre-challenge/creating-httpd-module/agent/hosts:/etc/hosts -v ~/sre-challenge/creating-httpd-module:/etc/puppet --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppet-agent4-c7-systemd bash -c "/usr/sbin/init"
 ```
 It will map the local port 8443 to the docker container port 443 and local port 8080 to container port 80.
+
+if you see error as below:
+```
+docker run  -d --name puppetagent --cap-add SYS_ADMIN --security-opt seccomp:unconfined --hostname puppetagent -p 8443:443 -p 8080:80 -v ~/sre-challenge/creating-httpd-module/agent/hosts:/etc/hosts -v ~/sre-challenge/creating-httpd-module:/etc/puppet --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppet-agent4-c7-systemd bash -c "/usr/sbin/init"
+docker: Error response from daemon: Conflict. The container name "/puppetagent" is already in use by container 667cbbad0c17fb5a435a9832b8dbc20e73e61a01aaf23e0271e61b37b5e8a76b. You have to remove (or rename) that container to be able to reuse that name..
+See 'docker run --help'.
+```
+you need stop the container "puppetagent" and remove it as below from local host and retry
+```
+$ docker stop puppetagent
+$ docker rm puppetagent
+```
 #### Connect to the puppetagent docker container
 ```
 # docker exec -it puppetagent /bin/bash
