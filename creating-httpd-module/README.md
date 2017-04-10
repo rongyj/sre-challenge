@@ -44,18 +44,20 @@ docker pull rongyj/puppet-agent4-c7-systemd
 ```
 #### Run puppetagent docker container with right mapping for the port and volumes
 ```
-docker run  -d --name puppetagent --cap-add SYS_ADMIN --security-opt seccomp:unconfined --hostname puppetagent -p 8443:443 -p 8080:80 -v ~/sre-challenge-new/creating-httpd-module/agent/hosts:/etc/hosts -v ~/sre-challenge-new/creating-httpd-module:/etc/puppet --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppet-agent4-c7-systemd bash -c "/usr/sbin/init"
+docker run  -d --name puppetagent --cap-add SYS_ADMIN --security-opt seccomp:unconfined --hostname puppetagent -p 8443:443 -p 8080:80 -v ~/sre-challenge/creating-httpd-module/agent/hosts:/etc/hosts -v ~/sre-challenge/creating-httpd-module:/etc/puppet --cap-add=NET_ADMIN --cap-add=NET_RAW rongyj/puppet-agent4-c7-systemd bash -c "/usr/sbin/init"
 ```
 It will map the local port 8443 to the docker container port 443 and local port 8080 to container port 80.
-####
-[root@puppetagent tests]# pwd
-/opt/puppet/tests
-[root@puppetagent tests]# puppet apply --modulepath=/opt/puppet/modules --debug --verbose test.pp
-
-/sbin/iptables -R INPUT 1 -t filter -p tcp -m multiport --dports 22,80,443 -m comment --comment "100 allow ssh, http and https access" -j ACCEPT
+#### Connect to the puppetagent docker container
 ```
+# docker exec -it puppetagent /bin/bash
+[root@puppetagent /]#puppet apply --modulepath=/etc/puppet/modules /etc/puppet/manifests/init.pp
 
-[root@puppetagent tests]# iptables -L
+```
+#### Test it from local host browser
+type "http://localhost:8080/" in a browser and it will be redirected to "https://localhost:8443/" automatically and the "SRE-Challenge" will be displayed.
+From the above container terminal and the iptables -L can show the list of the firewall rules:
+```
+[root@puppetagent manifests]# iptables -L
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
 ACCEPT     icmp --  anywhere             anywhere             /* 000 accept all icmp */
@@ -78,9 +80,4 @@ target     prot opt source               destination
 ACCEPT     all  --  anywhere             anywhere             /* 004 accept related established rules */ state RELATED,ESTABLISHED
 ACCEPT     udp  --  anywhere             anywhere             multiport dports domain /* 200 allow outgoing dns lookups */ state NEW
 ACCEPT     icmp --  anywhere             anywhere             /* 200 allow outgoing icmp type 8 (ping) */ icmp echo-request
-
-## Cento 6 Docker container issues
-Error: Modifying the chain for existing rules is not supported.
-Error: /Stage[main]/Main/Httpd::Vhost[puppetagent]/Firewall[100 allow http access]/chain: change from 80 to INPUT failed: Modifying the chain for existing rules is not supported.
-
-FATAL: Could not load /lib/modules/4.9.13-moby/modules.dep: No such file or directory
+```
